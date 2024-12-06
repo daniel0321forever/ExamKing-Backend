@@ -1,0 +1,20 @@
+# WebSocket/Async
+channels==3.0.5
+asgiref>=3.7.2
+
+# Authentication & Security
+django>=4.2.14
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.3.1
+django-cors-headers>=4.3.1
+
+# Google Auth
+google-auth>=2.27.0
+google-api-python-client==2.149.0
+
+# Cache & Data Storage
+redis>=5.0.1
+
+# Environment Variables
+python-dotenv==0.21.0
+google-api-python-client==2.149.0
