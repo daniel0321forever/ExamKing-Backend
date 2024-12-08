@@ -1,2 +1,2 @@
 echo "deploying"
-daphne testing_game.asgi:application
+daphne -b 0.0.0.0 -p 443 testing_game.asgi:application
