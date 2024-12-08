@@ -3,10 +3,13 @@
         {
             "src": "testing_game/asgi.py",
             "use": "@vercel/python",
-            "config": { "maxLambdaSize": "15mb", "runtime": "python3.11.3" }
+            "config": { 
+                "maxLambdaSize": "15mb", 
+                "runtime": "Python3.11" 
+            }
         },
         {
-            "src": "build.sh",
+            "src": "build_files.sh",
             "use": "@vercel/static-build"
         }
     ],

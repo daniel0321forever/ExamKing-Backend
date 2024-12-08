@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-echo "BUILD START"
-python3.11 -m venv venv
-source venv/bin/activate
-
 echo "installing requirements"
 python3 -m pip install -r requirements.txt
 
