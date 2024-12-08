@@ -7,11 +7,17 @@ from gaming.models import User
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from urllib.parse import parse_qs
-
+import os
 # redis 
 import redis
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+r = redis.StrictRedis(
+    host=os.environ.get('REDIS_HOST'), 
+    port=os.environ.get('REDIS_PORT'), 
+    decode_responses=True,
+    username=os.environ.get('REDIS_USERNAME'),
+    password=os.environ.get('REDIS_PASSWORD')
+)
 
 # Set random seed based on current time
 random.seed()
@@ -98,17 +104,19 @@ class GameConsumer(WebsocketConsumer):
 
             # if someone's waiting
             else:
-                while r.get(waitingRoom.decode()):
-                    # print(f"removing waiting room {waitingRoom.decode()}")
-                    r.delete(waitingRoom.decode()) # remove canceled reord
+                waitingRoom = waitingRoom if isinstance(waitingRoom, str) else waitingRoom.decode()
+                while r.get(waitingRoom):
+                    r.delete(waitingRoom) # remove canceled reord
                     waitingRoom = r.lpop(self.challengeRoomKey)
 
                     if waitingRoom is None:
                         break
 
+                    waitingRoom = waitingRoom if isinstance(waitingRoom, str) else waitingRoom.decode()
+
                 # if it does find match in waiting list
                 if waitingRoom is not None:
-                    self.roomName = waitingRoom.decode()
+                    self.roomName = waitingRoom
                 # if it go the end of the waiting list but still does not find available room
                 else:
                     self.pushRoom(self.username)
@@ -157,7 +165,8 @@ class GameConsumer(WebsocketConsumer):
                         p['answer'] = p['options'].index(ans)
                         problems.append(p)
 
-                hostUsername = r.get(f"{self.roomName}_{ROOM_HOST_POSTFIX}").decode()
+                hostUsername = r.get(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
+                hostUsername = hostUsername if isinstance(hostUsername, str) else hostUsername.decode()
 
                 hostUser, created = User.objects.get_or_create(
                     username=hostUsername,
@@ -191,9 +200,9 @@ class GameConsumer(WebsocketConsumer):
 
                 
         except Exception as e:
-            print(f"excepction {e} occurs as client connecting to GameConsumer")
-            self.send(json.dumps({"error": f"exception {e} occurs as client connecting to game socket"}))
+            # self.send(json.dumps({"error": f"exception {e} occurs as client connecting to game socket"}))
             self.close()
+            raise e
 
     def disconnect(self, code):
         """
