@@ -4,13 +4,15 @@ from django.utils import timezone
 from uuid import uuid4
 
 NURSING = "Nursing"
-PHYSIC = "Physic"
 SANRIO = "Sanrio"
+HIGHSCHOOL = "highschool"
+BIOLOGY = "biology"
 
 field_choice = (
     (NURSING, "nursing"),
-    (PHYSIC, "physic"),
     (SANRIO, "sanrio"),
+    # (HIGHSCHOOL, "highschool"),
+    (BIOLOGY, "biology"),
 )
 
 class CustomUserManager(BaseUserManager):
@@ -61,6 +63,7 @@ class AnswerRecord(models.Model):
     field = models.CharField(max_length=32, choices=field_choice)
     totCorrect = models.IntegerField()
     totWrong = models.IntegerField()
+    createdTime = models.DateTimeField(auto_now_add=True)
     
 
 class BattleRecord(models.Model):

@@ -1,0 +1,19 @@
+{
+    "builds": [
+        {
+            "src": "testing_game/asgi.py",
+            "use": "@vercel/python",
+            "config": { "maxLambdaSize": "15mb", "runtime": "python3.11.3" }
+        },
+        {
+            "src": "build.sh",
+            "use": "@vercel/static-build"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "testing_game/asgi.py"
+        }
+    ]
+}

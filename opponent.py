@@ -7,13 +7,13 @@ userID = "computer"
 async def connectToSocket(uri):
     async with websockets.connect(uri) as websocket:
         i = 0
-        while i < 5:
+        while i < 8:
             score = int(input("please input score: "))
             payload = json.dumps({
                 'type': 'answer',
                 'userID': userID,
                 'score': score,
-                'option_index': None,
+                'optionIndex': 1,
             })
 
             await websocket.send(payload)
@@ -21,7 +21,8 @@ async def connectToSocket(uri):
         # res = await websocket.read_message()
         # print(f"get response {res}")
 
-challenge = input("please input challenge: ")
+# challenge = input("please input challenge: ")
+challenge = "biology"
 asyncio.get_event_loop().run_until_complete(
     connectToSocket(f'ws://localhost:8000/api/battle?user={userID}&challenge={challenge}')
 )
