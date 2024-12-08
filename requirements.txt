@@ -1,19 +1,11 @@
-# WebSocket/Async
 channels==3.0.5
 asgiref>=3.8.1
-
-# Authentication & Security
 Django==5.0.4
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 django-cors-headers>=4.6.0
-
-# Google Auth
 google-auth==2.35.0
 google-api-python-client==2.149.0
-
-# Cache & Data Storage
-redis>=5.1.1
-
-# Environment Variables
+redis==5.1.1
 python-dotenv==0.21.0
+psycopg2-binary==2.9.7
