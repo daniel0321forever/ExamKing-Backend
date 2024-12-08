@@ -22,7 +22,7 @@ async def connectToSocket(uri):
         # print(f"get response {res}")
 
 # challenge = input("please input challenge: ")
-challenge = "biology"
+challenge = "nursing"
 asyncio.get_event_loop().run_until_complete(
     connectToSocket(f'ws://localhost:8000/api/battle?user={userID}&challenge={challenge}')
 )

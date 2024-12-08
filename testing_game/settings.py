@@ -41,7 +41,7 @@ SECRET_KEY = "django-insecure-+&hgi$4y#2be7(rshce6e8ric%n_5qhp@up%p(2=!6bq!thx!!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '10.0.2.2', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '10.0.2.2', 'localhost', 'exam-king-backend.vercel.app']
 
 # NOTE: Temporary for google sign in
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
