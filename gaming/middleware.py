@@ -15,7 +15,7 @@ class FieldValidateMiddleware(BaseMiddleware):
 
             return await super().__call__(scope, receive, send)
         except Exception as e:
-            print(f"Exception {e} occurs when validating field")
+            print(f"Exception '{e}' occurs when validating field")
             scope["is_validated"] = False
             scope["error"] = e
             return await super().__call__(scope, receive, send)

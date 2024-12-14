@@ -71,3 +71,14 @@ class BattleRecord(models.Model):
     winner = models.ForeignKey(User, related_name="win_record", on_delete=models.SET_NULL, null=True)
     loser = models.ForeignKey(User, related_name="lose_record", on_delete=models.SET_NULL, null=True)
     field = models.CharField(max_length=32, choices=field_choice)
+
+class Problem(models.Model):
+    class Meta:
+        db_table = "problem"
+
+    hashed_id = models.CharField(max_length=256, primary_key=True)
+    field = models.CharField(max_length=32, choices=field_choice)
+    problem = models.CharField(max_length=512)
+    answer = models.IntegerField()
+    options = models.JSONField()
+    correct_rate = models.FloatField(default=60.0)

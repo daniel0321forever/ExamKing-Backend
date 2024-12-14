@@ -10,4 +10,5 @@ urlpatterns = [
     path('user', UserAPI.as_view()),
     path('check_username', CheckUsername.as_view()),
     path('check_email', CheckEmail.as_view()),
+    path('initialize_problem', InitializeProblem.as_view()),
 ]
