@@ -6,6 +6,8 @@ from django.db.models import QuerySet
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate
+from django.core.validators import validate_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from rest_framework.views import APIView, Response, Request, status
@@ -14,6 +16,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 
 from .models import AnswerRecord, BattleRecord, User
+from .serializers import UserSignupSerializer, UserSigninSerializer, UserSerializer
 
 class AuthGoogle(APIView):
     """
@@ -33,28 +36,21 @@ class AuthGoogle(APIView):
         
         # update model
         user, created = User.objects.get_or_create(
-            username=email,
+            google_username=email,
             defaults={
                 "email": email, 
                 "name": user_data.get("name"),
             }
         )
 
-        # get battle record
-        win_record: QuerySet = user.win_record.all()
-        lose_record: QuerySet = user.lose_record.all()
-        win_rate = win_record.count() / (win_record.count() + lose_record.count()) if win_record.count() + lose_record.count() > 0 else 0.0
-
         refresh = RefreshToken.for_user(user)
+
+        user_ser = UserSerializer(user)
+        serialized_user = user_ser.data
     
         return Response({
             "access_token": str(refresh.access_token),
-            "name": user.name,
-            "username": user.username,
-            "photo_url": user_data.get('picture', None),
-            "win_record": win_record.count(),
-            "lose_record": lose_record.count(),
-            "win_rate": win_rate
+            **serialized_user,
         }, status=status.HTTP_200_OK)
 
     @staticmethod
@@ -80,7 +76,7 @@ class AuthGoogle(APIView):
         return user_data
     
 
-class TokenSignIn(APIView):
+class TokenLogin(APIView):
     """
     Sign in with token to get user data
     """
@@ -88,20 +84,139 @@ class TokenSignIn(APIView):
 
     def post(self, request: Request):
         user = request.user
-
-        win_record: QuerySet = user.win_record.all()
-        lose_record: QuerySet = user.lose_record.all()
-        win_rate = win_record.count() / (win_record.count() + lose_record.count()) if win_record.count() + lose_record.count() > 0 else 0.0
+        user_ser = UserSerializer(user)
+        serialized_user = user_ser.data
 
         return Response({
-            "name": user.name,
-            "username": user.username,
-            "photo_url": "",
-            "win_record": win_record.count(),
-            "lose_record": lose_record.count(),
-            "win_rate": win_rate
+            **serialized_user,
         }, status=status.HTTP_200_OK)
 
+
+class UserSignUp(APIView):
+    """
+    Handles user signup by validating and creating new user accounts, 
+    generating tokens, and setting cookies for authentication.
+    """
+    def post(self, request):
+        required_fields = ['email', 'username', 'password', 'name']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {"error": f"The '{field}' field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Check if the user already exists
+        if User.objects.filter(username=request.data['username']).exists():
+            return Response(
+                {"error": "A user with this email or username already exists."},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # Proceed with user creation if validations pass
+        serializer = UserSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Generate both access and refresh tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+
+            # user data
+            user_ser = UserSerializer(user)
+            serialized_user = user_ser.data
+            print(f"user data is {serialized_user}")
+
+            return Response({
+                "access_token": access_token,
+                **serialized_user,
+            }, status=status.HTTP_200_OK)
+        
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLogin(APIView):
+    """
+    Handles user login by validating credentials, generating tokens,
+    and setting cookies for authentication.
+    """
+    def post(self, request):
+        required_fields = ['username', 'password']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {"error": f"The '{field}' field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
+        username = request.data.get('username')
+        password = request.data.get('password')
+    
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+
+            # user data
+            user_ser = UserSerializer(user)
+            serialized_user = user_ser.data
+            print(f"user data is {serialized_user}")
+
+            return Response({
+                "access_token": str(refresh.access_token),
+                **serialized_user,
+            }, status=status.HTTP_200_OK)
+        
+        else:
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+class CheckUsername(APIView):
+    """
+    Check if the username is already taken
+    """
+    def post(self, request):
+        required_fields = ['username']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {"error": f"The '{field}' field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
+        username = request.data.get('username')
+
+        if User.objects.filter(username=username).exists():
+            return Response({"message": "username already taken"}, status=status.HTTP_409_CONFLICT)
+        else:
+            return Response({"message": "username is available"}, status=status.HTTP_200_OK)
+        
+class CheckEmail(APIView):
+    """
+    Check if the email is valid or not
+    """
+    def post(self, request):
+
+        required_fields = ['email']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {"error": f"The '{field}' field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        email = request.data.get('email')
+
+        try:
+            validate_email(email)
+        except:
+            return Response({"message": "email is invalid"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email).exists():
+            return Response({"message": "email already taken"}, status=status.HTTP_409_CONFLICT)
+        
+        return Response({"message": "email is available"}, status=status.HTTP_200_OK)
 
 # @method_decorator(csrf_exempt, name='dispatch')
 class SignOut(APIView):
@@ -109,9 +224,6 @@ class SignOut(APIView):
     Delete signed in token
     """
     def post(self, request, *args, **kwargs):
-
-        # update model
-
         return Response({"message": "deleted"}, status=status.HTTP_204_NO_CONTENT)
     
 class UserAPI(APIView):

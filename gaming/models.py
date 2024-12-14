@@ -37,20 +37,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique=True)
     name = models.CharField(max_length=64)
-    email = models.EmailField(blank=True, default='', unique=True)
-    username = models.CharField(max_length=255, blank=True, default='')
-    password = models.CharField(max_length=128, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    username = models.CharField(max_length=255, blank=True, unique=True, null=True)
+    google_username = models.CharField(max_length=255, blank=True, unique=True, null=True)
+    password = models.CharField(max_length=128, blank=True, null=True)
 
-    # is_active = models.BooleanField(default=True)
-    # is_staff = models.BooleanField(default=False)
-    # is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     def __str__(self):
         return self.email
