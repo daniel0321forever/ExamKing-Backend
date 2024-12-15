@@ -1,4 +1,6 @@
 import os
+import json
+
 from gaming import models
 
 from django.shortcuts import render
@@ -15,12 +17,34 @@ from rest_framework.views import APIView, Response, Request, status
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .models import AnswerRecord, BattleRecord, User
+from .models import AnswerRecord, BattleRecord, User, Problem
 from .serializers import UserSignupSerializer, UserSigninSerializer, UserSerializer
+from .algo import hash_problem
 
 class AuthGoogle(APIView):
     """
-    API to handle google log in
+    API to handle Google login.
+
+    POST /auth/
+    -----------
+    Request Body:
+    {
+        "id_token": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "access_token": "string",
+        "id": "integer",
+        "email": "string",
+        "name": "string",
+        "username": "string"
+    }
+    - Failure (403 Forbidden):
+    {
+        "error": "Invalid Google token"
+    }
     """
     permission_classes = []
 
@@ -78,7 +102,20 @@ class AuthGoogle(APIView):
 
 class TokenLogin(APIView):
     """
-    Sign in with token to get user data
+    Sign in with token to get user data.
+
+    POST /token_login/
+    ------------------
+    Request Headers: Authorization header with Bearer token.
+
+    Response:
+    - Success (200 OK):
+    {
+        "id": "integer",
+        "email": "string",
+        "name": "string",
+        "username": "string"
+    }
     """
     permission_classes = [IsAuthenticated]
 
@@ -96,6 +133,34 @@ class UserSignUp(APIView):
     """
     Handles user signup by validating and creating new user accounts, 
     generating tokens, and setting cookies for authentication.
+
+    POST /signup/
+    -------------
+    Request Body:
+    {
+        "email": "string",
+        "username": "string",
+        "password": "string",
+        "name": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "access_token": "string",
+        "id": "integer",
+        "email": "string",
+        "name": "string",
+        "username": "string"
+    }
+    - Failure (400 Bad Request):
+    {
+        "error": "The 'field' field is required."
+    }
+    - Failure (409 Conflict):
+    {
+        "error": "A user with this email or username already exists."
+    }
     """
     def post(self, request):
         required_fields = ['email', 'username', 'password', 'name']
@@ -139,6 +204,28 @@ class UserLogin(APIView):
     """
     Handles user login by validating credentials, generating tokens,
     and setting cookies for authentication.
+
+    POST /login/
+    ------------
+    Request Body:
+    {
+        "username": "string",
+        "password": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "access_token": "string",
+        "id": "integer",
+        "email": "string",
+        "name": "string",
+        "username": "string"
+    }
+    - Failure (401 Unauthorized):
+    {
+        "error": "Invalid credentials."
+    }
     """
     def post(self, request):
         required_fields = ['username', 'password']
@@ -174,7 +261,24 @@ class UserLogin(APIView):
 
 class CheckUsername(APIView):
     """
-    Check if the username is already taken
+    Check if the username is already taken.
+
+    POST /check_username/
+    ---------------------
+    Request Body:
+    {
+        "username": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "username is available"
+    }
+    - Failure (409 Conflict):
+    {
+        "message": "username already taken"
+    }
     """
     def post(self, request):
         required_fields = ['username']
@@ -195,7 +299,28 @@ class CheckUsername(APIView):
         
 class CheckEmail(APIView):
     """
-    Check if the email is valid or not
+    Check if the email is valid or not.
+
+    POST /check_email/
+    ------------------
+    Request Body:
+    {
+        "email": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "email is available"
+    }
+    - Failure (400 Bad Request):
+    {
+        "message": "email is invalid"
+    }
+    - Failure (409 Conflict):
+    {
+        "message": "email already taken"
+    }
     """
     def post(self, request):
 
@@ -221,14 +346,40 @@ class CheckEmail(APIView):
 # @method_decorator(csrf_exempt, name='dispatch')
 class SignOut(APIView):
     """
-    Delete signed in token
+    Delete signed in token.
+
+    POST /signout/
+    --------------
+    Response:
+    - Success (204 No Content):
+    {
+        "message": "deleted"
+    }
     """
     def post(self, request, *args, **kwargs):
         return Response({"message": "deleted"}, status=status.HTTP_204_NO_CONTENT)
     
 class UserAPI(APIView):
     """
-    PATCH: update user information
+    PATCH: update user information.
+
+    PATCH /user/
+    ------------
+    Request Headers: Authorization header with Bearer token.
+    Request Body:
+    {
+        "name": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "user updated"
+    }
+    - Failure (400 Bad Request):
+    {
+        "error": "the field 'field_name' is not permitted"
+    }
     """
 
     permission_classes = [IsAuthenticated]
@@ -257,6 +408,43 @@ class UserAPI(APIView):
 
 # Create your views here.
 class Record(APIView):
+    """
+    Manage user records.
+
+    GET /record/
+    ------------
+    Request Headers: Authorization header with Bearer token.
+
+    Response:
+    - Success (200 OK):
+    {
+        "field_name": {
+            "field": "string",
+            "totCorrect": "integer",
+            "totWrong": "integer",
+            "correctRate": "float"
+        },
+        ...
+    }
+
+    POST /record/
+    -------------
+    Request Headers: Authorization header with Bearer token.
+    Request Body:
+    {
+        "field": "string",
+        "totCorrect": "integer",
+        "totWrong": "integer",
+        "opponent": "string",
+        "victory": "boolean"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "updated"
+    }
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -347,3 +535,57 @@ class Record(APIView):
             return Response({"message": "updated"}, status=status.HTTP_200_OK)
         except Exception as e:
             raise e
+
+class InitializeProblem(APIView):
+    """
+    Initialize problems from a JSON file.
+
+    POST /initialize_problem/
+    -------------------------
+    Request Headers: Authorization header with Bearer token.
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "initialized"
+    }
+    - Failure (403 Forbidden):
+    {
+        "error": "no permission"
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            if user.username != os.environ["ADMIN_USERNAME"]:
+                return Response({"error": "no permission"}, status=status.HTTP_403_FORBIDDEN)
+            
+            with open('gaming/problems.json', 'r') as f:
+                all_problems = json.load(f)
+
+                for key, item in all_problems.items():
+                    for problem in item:
+                        hashed_id = hash_problem(problem)
+                        
+                        problem, created = Problem.objects.get_or_create(
+                            hashed_id=hashed_id,
+                            defaults={
+                                "field": key,
+                                "problem": problem["problem"],
+                                "options": problem["options"],
+                                "answer": problem["answer"],
+                                "correct_rate": problem.get("correct_rate", 60.0),
+                            }
+                        )
+
+                        if created:
+                            print(f"problem {problem['problem']} is initialized")
+
+                return Response({"message": "initialized"}, status=status.HTTP_200_OK)
+    
+        except Exception as e:
+            raise e
+
+        

@@ -3,7 +3,7 @@ import random
 
 import redis.cache
 
-from gaming.models import User
+from gaming.models import User, Problem
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from urllib.parse import parse_qs
@@ -30,6 +30,7 @@ class GameConsumer(WebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.isMatched = False
         self.roomName = None
+        self.use_agent = False
 
     def connect(self):
         """
@@ -76,6 +77,7 @@ class GameConsumer(WebsocketConsumer):
         The roomName that has been matched as cancelled would then be remove from the cancelled record.
         """
         try:
+            
             query = parse_qs(self.scope['query_string'].decode())
             
             # TODO: wrap in cleaner style
@@ -147,23 +149,24 @@ class GameConsumer(WebsocketConsumer):
 
                 # TODO: read from database
                 problems = None
-                with open('gaming/problems.json', 'r') as f:
-                    all_problems = json.load(f).get(challenge, None)
 
-                    if all_problems is None:
-                        print(f"error: challenge '{challenge}' is not found in problems.json")
-                        self.send(json.dumps({"error": f"challenge '{challenge}' is not found in problems.json"}))
-                        self.close()
-                        return
+                # read from database
+                problem_ids = list(Problem.objects.filter(field=challenge).values_list('hashed_id', flat=True))
+                random_problem_ids = random.sample(problem_ids, min(5, len(problem_ids)))
+                
+                problems = []
+                for p in Problem.objects.filter(hashed_id__in=random_problem_ids):
+                    ans = p.options[p.answer]
+                    problem_item = {
+                        "problem": p.problem,
+                        "options": random.sample(p.options, len(p.options)),
+                    }
 
-                    problems = []
+                    problem_item['answer'] = problem_item['options'].index(ans)
 
-                    # randomize the problem and answer
-                    for p in random.sample(all_problems, min(5, len(all_problems))):
-                        ans = p['options'][p['answer']]
-                        p['options'] = random.sample(p['options'], len(p['options']))
-                        p['answer'] = p['options'].index(ans)
-                        problems.append(p)
+                    problems.append(problem_item)
+                
+                print(problems)
 
                 hostUsername = r.get(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
                 hostUsername = hostUsername if isinstance(hostUsername, str) else hostUsername.decode()

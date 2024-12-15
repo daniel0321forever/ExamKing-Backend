@@ -1,0 +1,39 @@
+import os
+import requests
+
+host = "http://localhost:8000/api"
+username = os.environ["ADMIN_USERNAME"]
+password = os.environ["ADMIN_PASSWORD"]
+
+def get_token():
+    url = f"{host}/login"
+    response = requests.post(url, json={"username": username, "password": password})
+    if response.status_code == 200:
+        return response.json()["access_token"]
+
+    url = f"{host}/signup"
+    response = requests.post(url, json={"username": username, "password": password, "email": "daniel.bb0321@miutech.cloud", "name": "Daniel"})
+    if response.status_code == 200:
+        return response.json()["access_token"]
+
+    return None
+
+def initialize_problem():
+    token = get_token()
+    if not token:
+        print("no permission")
+        return
+
+    url = f"{host}/initialize_problem"
+    response = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    if response.status_code == 200:
+        print("initialize problem success")
+    else:
+        print(f"error: {response.status_code} {response.text}")
+
+if __name__ == "__main__":
+    initialize_problem()
