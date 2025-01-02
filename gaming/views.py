@@ -567,7 +567,6 @@ class InitializeProblem(APIView):
 
                 for key, item in all_problems.items():
                     for problem in item:
-                        print(f"problem is {problem}")
                         hashed_id = hash_problem(problem)
                         
                         problem_object, created = Problem.objects.get_or_create(

@@ -331,6 +331,448 @@
                 "紐約"
             ],
             "answer": 0
+        },
+
+
+        {
+            "problem": "Hello Kitty 的生日是幾月幾日？",
+            "options": [
+                "10月31日",
+                "11月1日",
+                "11月2日",
+                "12月1日"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "三麗鷗公司成立於哪一年？",
+            "options": [
+                "1960年",
+                "1970年",
+                "1980年",
+                "1990年"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗創造的？",
+            "options": [
+                "皮卡丘",
+                "米老鼠",
+                "Hello Kitty",
+                "小熊維尼"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "Hello Kitty 的全名是什麼？",
+            "options": [
+                "Kitty White",
+                "Kitty Smith",
+                "Kitty Johnson",
+                "Kitty Brown"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗的創辦人是誰？",
+            "options": [
+                "辻信太郎",
+                "宮崎駿",
+                "手塚治虫",
+                "松下幸之助"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪一個不是三麗鷗的角色？",
+            "options": [
+                "美樂蒂",
+                "布丁狗",
+                "大耳狗",
+                "角落生物"
+            ],
+            "answer": 3
+        },
+        {
+            "problem": "Hello Kitty 的蝴蝶結通常戴在哪一邊？",
+            "options": [
+                "左邊",
+                "右邊",
+                "中間",
+                "沒有固定位置"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗的總部位於哪個國家？",
+            "options": [
+                "中國",
+                "韓國",
+                "日本",
+                "美國"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "以下哪一個是三麗鷗的吉祥物？",
+            "options": [
+                "蛋黃哥",
+                "小黃人",
+                "史努比",
+                "多啦A夢"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 有沒有嘴巴？",
+            "options": [
+                "有",
+                "沒有",
+                "有時有，有時沒有",
+                "不確定"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "三麗鷗的英文名稱是什麼？",
+            "options": [
+                "Sanrio",
+                "Sanx",
+                "Sanrioh",
+                "Sanri"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的妹妹叫什麼名字？",
+            "options": [
+                "美樂蒂",
+                "雙星仙子",
+                "咪咪",
+                "酷洛米"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗的黑色小企鵝？",
+            "options": [
+                "大耳狗",
+                "布丁狗",
+                "酷企鵝",
+                "大眼蛙"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "Hello Kitty 的故鄉設定在哪裡？",
+            "options": [
+                "美國紐約",
+                "英國倫敦",
+                "日本東京",
+                "法國巴黎"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "三麗鷗的標語是什麼？",
+            "options": [
+                "Small Gift, Big Smile",
+                "Big Gift, Small Smile",
+                "Happy Life, Happy Smile",
+                "Cute Characters, Happy Life"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗的黃色狗？",
+            "options": [
+                "布丁狗",
+                "大耳狗",
+                "帕恰狗",
+                "酷企鵝"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的男朋友叫什麼名字？",
+            "options": [
+                "Dear Daniel",
+                "Dear David",
+                "Dear Danny",
+                "Dear Derek"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗的創辦人辻信太郎出生於哪一年？",
+            "options": [
+                "1927年",
+                "1930年",
+                "1935年",
+                "1940年"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗的白色兔子？",
+            "options": [
+                "美樂蒂",
+                "雙星仙子",
+                "酷洛米",
+                "蛋黃哥"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的寵物貓叫什麼名字？",
+            "options": [
+                "Charmmy Kitty",
+                "Lovely Kitty",
+                "Sweetie Kitty",
+                "Cutie Kitty"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗的總部位於日本的哪個城市？",
+            "options": [
+                "東京",
+                "大阪",
+                "京都",
+                "橫濱"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗的青蛙？",
+            "options": [
+                "大眼蛙",
+                "大耳狗",
+                "布丁狗",
+                "帕恰狗"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的血型是什麼？",
+            "options": [
+                "A型",
+                "B型",
+                "AB型",
+                "O型"
+            ],
+            "answer": 3
+        },
+        {
+            "problem": "三麗鷗的創辦人辻信太郎原本的職業是什麼？",
+            "options": [
+                "教師",
+                "醫生",
+                "公務員",
+                "律師"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "以下哪一個角色是三麗鷗的黑色兔子？",
+        "options": [
+            "酷洛米",
+            "美樂蒂",
+            "布丁狗",
+            "大耳狗"
+        ],
+        "answer": 0
+        },
+        {
+            "problem": "三麗鷗的角色中，哪一位住在雲朵上？",
+            "options": [
+                "雙星仙子",
+                "大耳狗",
+                "酷企鵝",
+                "美樂蒂"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 家族中的爸爸叫什麼名字？",
+            "options": [
+                "George White",
+                "David White",
+                "Henry White",
+                "James White"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的身高相當於幾個蘋果高？",
+            "options": [
+                "1個",
+                "3個",
+                "5個",
+                "7個"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "以下哪一個是三麗鷗的經典女性角色之一？",
+            "options": [
+                "美樂蒂",
+                "小熊維尼",
+                "多啦A夢",
+                "皮卡丘"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗首次推出的商品是什麼？",
+            "options": [
+                "文具",
+                "手提包",
+                "玩偶",
+                "服裝"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的喜歡的食物是什麼？",
+            "options": [
+                "蘋果派",
+                "巧克力",
+                "草莓",
+                "蛋糕"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗中，酷企鵝的個性如何？",
+            "options": [
+                "憂鬱且叛逆",
+                "開朗且活潑",
+                "害羞且內向",
+                "友善且平和"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗的蛋黃哥角色是基於什麼食材創造的？",
+            "options": [
+                "蛋黃",
+                "雞蛋",
+                "布丁",
+                "起司"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "雙星仙子中的哥哥叫什麼名字？",
+            "options": [
+                "Kiki",
+                "Lala",
+                "Mimi",
+                "Coco"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的家人住在哪個地方？",
+            "options": [
+                "Apple Town",
+                "London",
+                "Sanrio Village",
+                "Tokyo"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "以下哪個三麗鷗角色的夢想是成為一名糕點師？",
+            "options": [
+                "大耳狗",
+                "酷企鵝",
+                "美樂蒂",
+                "帕恰狗"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 的寵物哈姆太郎是什麼類型的動物？",
+            "options": [
+                "倉鼠",
+                "貓",
+                "狗",
+                "鳥"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "Hello Kitty 曾經擔任以下哪一種職業的吉祥物？",
+            "options": [
+                "醫院",
+                "警察",
+                "航空公司",
+                "郵局"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "三麗鷗中的角色布丁狗喜歡戴什麼？",
+            "options": [
+                "咖啡色的帽子",
+                "藍色的蝴蝶結",
+                "紅色的圍巾",
+                "黃色的披風"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗推出角色蛋黃哥的年份是？",
+            "options": [
+                "2013年",
+                "2014年",
+                "2015年",
+                "2016年"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "Hello Kitty 的學校名稱是什麼？",
+            "options": [
+                "Apple Forest Elementary",
+                "Kitty High School",
+                "Sanrio Academy",
+                "Starlight School"
+            ],
+            "answer": 0
+        },
+        {
+            "problem": "三麗鷗首次推出 Hello Kitty 的商品是什麼？",
+            "options": [
+                "錢包",
+                "筆記本",
+                "手帕",
+                "筆袋"
+            ],
+            "answer": 2
+        },
+        {
+            "problem": "雙星仙子中的妹妹叫什麼名字？",
+            "options": [
+                "Kiki",
+                "Lala",
+                "Mimi",
+                "Nana"
+            ],
+            "answer": 1
+        },
+        {
+            "problem": "Hello Kitty 最好的朋友叫什麼名字？",
+            "options": [
+                "美樂蒂",
+                "酷洛米",
+                "大耳狗",
+                "小蘿伊"
+            ],
+            "answer": 3
         }
 
     ],
