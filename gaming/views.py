@@ -478,57 +478,62 @@ class Record(APIView):
         Get the user record, maybe analyse the improve rate in the future
         """
 
-        try:
-            user = request.user
-            stats = []
+        user = request.user
+        stats = []
 
-            # correct rate
-            correct_rate = UniqueAnswerRecord.objects.filter(
-                user=user, correct=True).count() / UniqueAnswerRecord.objects.filter(
-                user=user).count()
+        # correct rate
+        correct = UniqueAnswerRecord.objects.filter(
+            user=user, correct=True).count()
+        total = UniqueAnswerRecord.objects.filter(
+            user=user).count()
+        correct_rate = correct / total if total > 0 else 0
 
-            stats.append({
-                "correct_rate": {
-                    "maxVal": 100.0,
-                    "val": correct_rate,
-                }
-            })
+        stats.append(
+            {
+                "key": "correct_rate",
+                "maxVal": 100.0,
+                "val": correct_rate * 100,
+            }
+        )
 
-            # win rate
-            win_rate = BattleRecord.objects.filter(
-                winner=user).count() / BattleRecord.objects.filter(
-                user=user).count()
+        # win rate
+        win = BattleRecord.objects.filter(
+            winner=user).count()
+        total = BattleRecord.objects.filter(
+            models.Q(winner=user) | models.Q(loser=user)).count()
+        win_rate = win / total if total > 0 else 0
 
-            stats.append({
-                "win_rate": {
-                    "maxVal": 100.0,
-                    "val": win_rate,
-                }
-            })
+        stats.append(
+            {
+                "key": "win_rate",
+                "maxVal": 100.0,
+                "val": win_rate * 100,
+            }
+        )
 
-            # avg words
-            first_word_date = WordLearningRecord.objects.filter(
-                user=user).order_by('createdTime').first().createdTime
+        # avg words
+        avg_words = 0
+        first_word = WordLearningRecord.objects.filter(
+            user=user).order_by('created_time').first()
 
-            today = datetime.now()
+        if first_word:
+            first_word_date = first_word.created_time
 
-            days = (today - first_word_date).days
+            today = datetime.now().date()
+            days = (today - first_word_date).days + 1
 
             avg_words = WordLearningRecord.objects.filter(
-                user=user).count() / days
+                user=user).count() / days if days > 0 else 0
 
-            stats.append({
-                "avg_words": {
-                    "maxVal": 100.0,
-                    "val": avg_words,
-                }
-            })
+        stats.append(
+            {
+                "key": "avg_words",
+                "maxVal": 100.0,
+                "val": avg_words,
+            }
+        )
 
-            return Response(stats, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            print(e)
-            return Response({"error": e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(stats, status=status.HTTP_200_OK)
 
     def post(self, request):
         """
@@ -605,7 +610,7 @@ class WordAPI(APIView):
         """
 
         level = request.GET.get("level")
-        words: list[Word] = Word.objects.filter(level=level)
+        words = Word.objects.filter(level=level)
 
         serialized_words = [
             {
@@ -616,7 +621,8 @@ class WordAPI(APIView):
                 "example": Definition.objects.filter(word=word).first().example,
                 "level": word.level,
                 "isLearned": WordLearningRecord.objects.filter(
-                    user=request.user, word=word).status == REVIEWING,
+                    user=request.user, word=word).first().status == REVIEWING if len(WordLearningRecord.objects.filter(
+                        user=request.user, word=word)) > 0 else False,
                 "seenCount": WordLearningRecord.objects.filter(
                     user=request.user, word=word).count(),
             } for word in words
@@ -630,10 +636,17 @@ class WordAPI(APIView):
         """
 
         word = request.data["word"]
-        status = request.data["status"]
+        word_object = None
+
+        try:
+            word_object = Word.objects.get(word=word)
+        except Word.DoesNotExist:
+            return Response({"error": "word not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        learning_status = request.data["status"]
 
         WordLearningRecord.objects.create(
-            user=request.user, word=word, status=status)
+            user=request.user, word=word_object, status=learning_status)
 
         return Response({"message": "updated"}, status=status.HTTP_200_OK)
 
@@ -725,7 +738,7 @@ class CorrectRateAPI(APIView):
 
             correct_rate.append(daily_correct_rate)
 
-        return Response(correct_rate, status=status.HTTP_200_OK)
+        return Response([correct_rate], status=status.HTTP_200_OK)
 
 
 class InitializeProblem(APIView):
@@ -749,35 +762,6 @@ class InitializeProblem(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        try:
-            user = request.user
-            if user.username != os.environ["ADMIN_USERNAME"]:
-                return Response({"error": "no permission"}, status=status.HTTP_403_FORBIDDEN)
-
-            with open('gaming/problems.json', 'r') as f:
-                all_problems = json.load(f)
-
-                for key, item in all_problems.items():
-                    for problem in item:
-                        hashed_id = hash_problem(problem)
-
-                        problem_object, created = Problem.objects.get_or_create(
-                            hashed_id=hashed_id,
-                            defaults={
-                                "field": key,
-                                "problem": problem["problem"],
-                                "options": problem["options"],
-                                "answer": problem["answer"],
-                                "correct_rate": problem.get("correct_rate", 60.0),
-                            }
-                        )
-
-                        if created:
-                            print(
-                                f"problem {problem['problem']} is initialized")
-
-        except Exception as e:
-            raise e
 
         with open("gaming/words.json", "r") as f:
             word_list = json.load(f)
@@ -799,5 +783,37 @@ class InitializeProblem(APIView):
                     example=definition["example"],
                     translation=definition["translation"],
                 )
+
+        user = request.user
+        if user.username != os.environ["ADMIN_USERNAME"]:
+            return Response({"error": "no permission"}, status=status.HTTP_403_FORBIDDEN)
+
+        Problem.objects.all().delete()  # TODO: remove this after testing
+
+        # initialize problems
+        with open('gaming/problems.json', 'r') as f:
+            all_problems = json.load(f)
+
+            for key, item in all_problems.items():
+                for problem in item:
+                    hashed_id = hash_problem(problem)
+
+                    print(f"word is {problem.get('word', None)}")
+
+                    problem_object, created = Problem.objects.get_or_create(
+                        hashed_id=hashed_id,
+                        defaults={
+                            "field": key,
+                            "problem": problem["problem"],
+                            "options": problem["options"],
+                            "answer": problem["answer"],
+                            "correct_rate": problem.get("correct_rate", 60.0),
+                            "word": Word.objects.get(word=problem.get("word", None)) if problem.get("word", None) else None,
+                        }
+                    )
+
+                    if created:
+                        print(
+                            f"problem {problem['problem']} is initialized")
 
         return Response({"message": "initialized"}, status=status.HTTP_200_OK)

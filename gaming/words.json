@@ -4044,7 +4044,7 @@
         ]
     },
     {
-        "word": "behooves",
+        "word": "behoove",
         "level": 8,
         "definitions": [
             {
@@ -11052,6 +11052,18 @@
         ]
     },
     {
+        "word": "blatant",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "obvious and without disguise.",
+                "part_of_speech": "adjective",
+                "example": "The blatant lies of the politician were so obvious that even the most naive voter could see through them.",
+                "translation": "明顯的"
+            }
+        ]
+    },
+    {
         "word": "pith",
         "level": 1,
         "definitions": [
@@ -12188,6 +12200,66 @@
                 "part_of_speech": "noun",
                 "example": "Each decade has its own zeitgeist--the 1990's was a prosperous time in which the promise of the American Dream never seemed more palpable.",
                 "translation": "時代精神"
+            }
+        ]
+    },
+    {
+        "word": "bumbling",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "lacking in skill or ability.",
+                "part_of_speech": "adjective",
+                "example": "The bumbler was so clumsy that he often dropped things, even when he was trying to be careful.",
+                "translation": "笨拙的"
+            }
+        ]
+    },
+    {
+        "word": "capricious",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "changeable; unpredictable.",
+                "part_of_speech": "adjective",
+                "example": "The weather is capricious, changing from sunny to rainy in the blink of an eye.",
+                "translation": "變幻莫測的"
+            }
+        ]
+    },
+    {
+        "word": "commensurate",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "equal in size, amount, or degree.",
+                "part_of_speech": "adjective",
+                "example": "The damage to the house was commensurate with the cost of the repairs.",
+                "translation": "相等的"
+            }
+        ]
+    },
+    {
+        "word": "dictatorial",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "exercising absolute control or authority.",
+                "part_of_speech": "adjective",
+                "example": "The dictator's dictatorial rule left the country in chaos.",
+                "translation": "獨裁的"
+            }
+        ]
+    },
+    {
+        "word": "ascetic",
+        "level": 1,
+        "definitions": [
+            {
+                "definition": "characterized by self-denial and abstinence from worldly pleasures.",
+                "part_of_speech": "adjective",
+                "example": "The ascetic monk lived a life of poverty and self-denial, focusing on spiritual pursuits.",
+                "translation": "苦行的"
             }
         ]
     }
