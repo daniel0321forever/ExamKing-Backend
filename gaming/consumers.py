@@ -8,12 +8,12 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from urllib.parse import parse_qs
 import os
-# redis 
+# redis
 import redis
 
 r = redis.StrictRedis(
-    host=os.environ.get('REDIS_HOST'), 
-    port=os.environ.get('REDIS_PORT'), 
+    host=os.environ.get('REDIS_HOST'),
+    port=os.environ.get('REDIS_PORT'),
     decode_responses=True,
     username=os.environ.get('REDIS_USERNAME'),
     password=os.environ.get('REDIS_PASSWORD')
@@ -24,6 +24,7 @@ random.seed()
 
 ROOM_PREFIX = "room"
 ROOM_HOST_POSTFIX = "host"
+
 
 class GameConsumer(WebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -76,25 +77,28 @@ class GameConsumer(WebsocketConsumer):
         **Player cancelled**: If host player cancelled matching, we should record the roomName in redis server, while anyone match the cancelled room, they would move to the next room until the roomName is not recorded as cancelled.
         The roomName that has been matched as cancelled would then be remove from the cancelled record.
         """
+        # TODO: make it possible to trigger single mode
+
         try:
-            
+
             query = parse_qs(self.scope['query_string'].decode())
-            
+
             # TODO: wrap in cleaner style
             self.username = query.get('user', None)
             challenge = query.get('challenge', None)
+            level = query.get('level', 0)
 
             if self.username is None:
                 self.send("self.username is not provided in url")
                 self.close()
-            
+
             if challenge is None:
                 self.send("challenge is not provided in url")
                 self.close()
-            
+
             self.username = self.username[0]
             challenge = challenge[0]
-            
+
             # get waiting list
             self.challengeRoomKey = f'{challenge}_waiting'
             waitingRoom = r.lpop(self.challengeRoomKey)
@@ -102,22 +106,27 @@ class GameConsumer(WebsocketConsumer):
 
             # if no waiting list
             if waitingRoom is None:
+                print("no waiting list, push room")
                 self.pushRoom(self.username)
 
             # if someone's waiting
             else:
-                waitingRoom = waitingRoom if isinstance(waitingRoom, str) else waitingRoom.decode()
+                waitingRoom = waitingRoom if isinstance(
+                    waitingRoom, str) else waitingRoom.decode()
                 while r.get(waitingRoom):
-                    r.delete(waitingRoom) # remove canceled reord
+                    r.delete(waitingRoom)  # remove canceled reord
+                    print("remove canceled reord", waitingRoom)
                     waitingRoom = r.lpop(self.challengeRoomKey)
 
                     if waitingRoom is None:
                         break
 
-                    waitingRoom = waitingRoom if isinstance(waitingRoom, str) else waitingRoom.decode()
+                    waitingRoom = waitingRoom if isinstance(
+                        waitingRoom, str) else waitingRoom.decode()
 
                 # if it does find match in waiting list
                 if waitingRoom is not None:
+                    print("find match", waitingRoom)
                     self.roomName = waitingRoom
                 # if it go the end of the waiting list but still does not find available room
                 else:
@@ -151,13 +160,24 @@ class GameConsumer(WebsocketConsumer):
                 problems = None
 
                 # read from database
-                problem_ids = list(Problem.objects.filter(field=challenge).values_list('hashed_id', flat=True))
-                random_problem_ids = random.sample(problem_ids, min(5, len(problem_ids)))
-                
+                problem_ids = list(Problem.objects.filter(
+                    field=challenge).values_list('hashed_id', flat=True))
+
+                if challenge == 'gre':
+                    problem_ids = list(
+                        Problem.objects.filter(
+                            field=challenge,
+                            word__level__lte=(1+level) * 4,
+                        ).values_list('hashed_id', flat=True)
+                    )
+                random_problem_ids = random.sample(
+                    problem_ids, min(5, len(problem_ids)))
+
                 problems = []
                 for p in Problem.objects.filter(hashed_id__in=random_problem_ids):
                     ans = p.options[p.answer]
                     problem_item = {
+                        "problem_id": p.hashed_id,
                         "problem": p.problem,
                         "options": random.sample(p.options, len(p.options)),
                     }
@@ -165,27 +185,28 @@ class GameConsumer(WebsocketConsumer):
                     problem_item['answer'] = problem_item['options'].index(ans)
 
                     problems.append(problem_item)
-                
+
                 print(problems)
 
                 hostUsername = r.get(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
-                hostUsername = hostUsername if isinstance(hostUsername, str) else hostUsername.decode()
+                hostUsername = hostUsername if isinstance(
+                    hostUsername, str) else hostUsername.decode()
 
                 hostUser, created = User.objects.get_or_create(
                     username=hostUsername,
                     defaults={
-                        "email": "computer@gmail.com", 
-                        "name": "computer",
+                        "email": f"{hostUsername}@gmail.com",
+                        "name": "User",
                     }
                 )
-                
+
                 hostName = hostUser.name
                 player, created = User.objects.get_or_create(
                     username=self.username,
                     defaults={
-                        "email": "computer@gmail.com", 
-                        "name": "computer",
-                    }   
+                        "email": f"{self.username}@gmail.com",
+                        "name": "User",
+                    }
                 )
 
                 playerName = player.name
@@ -201,7 +222,6 @@ class GameConsumer(WebsocketConsumer):
                 )
                 r.delete(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
 
-                
         except Exception as e:
             # self.send(json.dumps({"error": f"exception {e} occurs as client connecting to game socket"}))
             self.close()
@@ -213,11 +233,11 @@ class GameConsumer(WebsocketConsumer):
 
         1) If it is the host that have not found match, the roomName would be recorded on redis cache, so that
         we could skip the room while it pop out from the queue
-        
+
         """
         self.recordCancel()
         self.close()
-    
+
     def receive(self, text_data=None, bytes_data=None):
         """
         The behavior of the backend when client has send to the game consumer. The following behavior is expected:
@@ -249,7 +269,7 @@ class GameConsumer(WebsocketConsumer):
         }
         ```
         """
-        
+
         requiredField = ['type', 'userID', 'score']
 
         try:
@@ -257,16 +277,18 @@ class GameConsumer(WebsocketConsumer):
             contentType = decodedContent.get("type", None)
 
             if contentType is None:
-                self.send(json.dumps({"error": "contentType field shoud not be None in json data"}))
+                self.send(json.dumps(
+                    {"error": "contentType field shoud not be None in json data"}))
                 self.close()
                 return
-            
+
             # select content type
             if contentType == 'answer':
                 # check if the required field is in the json data
                 for field in requiredField:
                     if field not in decodedContent:
-                        self.send(json.dumps({"error": f"required field '{field}' is not in the json data"}))
+                        self.send(json.dumps(
+                            {"error": f"required field '{field}' is not in the json data"}))
                         self.close()
                         return
 
@@ -281,15 +303,17 @@ class GameConsumer(WebsocketConsumer):
                 )
 
                 return
-            
+
             print("invalid contentType", contentType)
-            self.send(json.dumps({"error": f"invalid contentType '{contentType}"}))
+            self.send(json.dumps(
+                {"error": f"invalid contentType '{contentType}"}))
             self.close()
 
-
         except Exception as e:
-            print(f"excepction '{e}' occurs as game consumer received data from client")
-            self.send(json.dumps({'error': f"exception '{e}' occurs as game consumer received data from client"}))    
+            print(
+                f"excepction '{e}' occurs as game consumer received data from client")
+            self.send(json.dumps(
+                {'error': f"exception '{e}' occurs as game consumer received data from client"}))
 
     def pushRoom(self, userID):
         hashedUserID = hash(userID)
@@ -304,9 +328,10 @@ class GameConsumer(WebsocketConsumer):
         when the consumer pop out the roomName from the redis cache.
         """
         # print("player disconnected!!!!")
-        if not self.isMatched and self.roomName is not None: # the player is host and have been added to the waiting list with matching haven't occured yet
+        # the player is host and have been added to the waiting list with matching haven't occured yet
+        if not self.isMatched and self.roomName is not None:
             # print(f"recording {self.roomName} to cancel table")
-            r.set(self.roomName, 1) # The roomName being true means that the 
+            r.set(self.roomName, 1)  # The roomName being true means that the
             r.delete(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
 
     def answer(self, event):
@@ -324,6 +349,6 @@ class GameConsumer(WebsocketConsumer):
             "usernames": event["usernames"],
             "names": event["names"],
         }))
-    
+
     def setIsMatched(self, event):
         self.isMatched = event["isMatched"]

@@ -11,4 +11,7 @@ urlpatterns = [
     path('check_username', CheckUsername.as_view()),
     path('check_email', CheckEmail.as_view()),
     path('initialize_problem', InitializeProblem.as_view()),
+    path('correct_rate', CorrectRateAPI.as_view()),
+    path('word_progress', WordProgressAPI.as_view()),
+    path('word', WordAPI.as_view()),
 ]

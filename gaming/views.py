@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime, timedelta
 
 from gaming import models
 
@@ -17,9 +18,10 @@ from rest_framework.views import APIView, Response, Request, status
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from .models import AnswerRecord, BattleRecord, User, Problem
+from .models import *
 from .serializers import UserSignupSerializer, UserSigninSerializer, UserSerializer
 from .algo import hash_problem
+
 
 class AuthGoogle(APIView):
     """
@@ -57,12 +59,12 @@ class AuthGoogle(APIView):
             return HttpResponse("Invalid Google token", status=403)
 
         email = user_data["email"]
-        
+
         # update model
         user, created = User.objects.get_or_create(
             google_username=email,
             defaults={
-                "email": email, 
+                "email": email,
                 "name": user_data.get("name"),
             }
         )
@@ -71,7 +73,7 @@ class AuthGoogle(APIView):
 
         user_ser = UserSerializer(user)
         serialized_user = user_ser.data
-    
+
         return Response({
             "access_token": str(refresh.access_token),
             **serialized_user,
@@ -86,7 +88,6 @@ class AuthGoogle(APIView):
         if not token:
             raise ValueError("no id_token provided")
 
-
         user_data = None
         try:
             user_data = id_token.verify_oauth2_token(
@@ -96,9 +97,9 @@ class AuthGoogle(APIView):
             user_data = id_token.verify_oauth2_token(
                 token, requests.Request(), os.environ['GOOGLE_OAUTH_IOS_ID']
             )
-        
+
         return user_data
-    
+
 
 class TokenLogin(APIView):
     """
@@ -131,7 +132,7 @@ class TokenLogin(APIView):
 
 class UserSignUp(APIView):
     """
-    Handles user signup by validating and creating new user accounts, 
+    Handles user signup by validating and creating new user accounts,
     generating tokens, and setting cookies for authentication.
 
     POST /signup/
@@ -162,6 +163,7 @@ class UserSignUp(APIView):
         "error": "A user with this email or username already exists."
     }
     """
+
     def post(self, request):
         required_fields = ['email', 'username', 'password', 'name']
         for field in required_fields:
@@ -195,7 +197,7 @@ class UserSignUp(APIView):
                 "access_token": access_token,
                 **serialized_user,
             }, status=status.HTTP_200_OK)
-        
+
         print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -227,6 +229,7 @@ class UserLogin(APIView):
         "error": "Invalid credentials."
     }
     """
+
     def post(self, request):
         required_fields = ['username', 'password']
         for field in required_fields:
@@ -236,10 +239,9 @@ class UserLogin(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-
         username = request.data.get('username')
         password = request.data.get('password')
-    
+
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
@@ -255,9 +257,10 @@ class UserLogin(APIView):
                 "access_token": str(refresh.access_token),
                 **serialized_user,
             }, status=status.HTTP_200_OK)
-        
+
         else:
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class CheckUsername(APIView):
     """
@@ -280,6 +283,7 @@ class CheckUsername(APIView):
         "message": "username already taken"
     }
     """
+
     def post(self, request):
         required_fields = ['username']
         for field in required_fields:
@@ -289,14 +293,14 @@ class CheckUsername(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-
         username = request.data.get('username')
 
         if User.objects.filter(username=username).exists():
             return Response({"message": "username already taken"}, status=status.HTTP_409_CONFLICT)
         else:
             return Response({"message": "username is available"}, status=status.HTTP_200_OK)
-        
+
+
 class CheckEmail(APIView):
     """
     Check if the email is valid or not.
@@ -322,6 +326,7 @@ class CheckEmail(APIView):
         "message": "email already taken"
     }
     """
+
     def post(self, request):
 
         required_fields = ['email']
@@ -340,10 +345,12 @@ class CheckEmail(APIView):
 
         if User.objects.filter(email=email).exists():
             return Response({"message": "email already taken"}, status=status.HTTP_409_CONFLICT)
-        
+
         return Response({"message": "email is available"}, status=status.HTTP_200_OK)
 
 # @method_decorator(csrf_exempt, name='dispatch')
+
+
 class SignOut(APIView):
     """
     Delete signed in token.
@@ -356,9 +363,11 @@ class SignOut(APIView):
         "message": "deleted"
     }
     """
+
     def post(self, request, *args, **kwargs):
         return Response({"message": "deleted"}, status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class UserAPI(APIView):
     """
     PATCH: update user information.
@@ -391,15 +400,15 @@ class UserAPI(APIView):
         for k in body.keys():
             if k not in permitted_fields:
                 return Response(
-                    {"error": f"the field {k} is not permitted"}, 
+                    {"error": f"the field {k} is not permitted"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
+
         user: User = request.user
-        
+
         for attr, value in body.items():
             setattr(user, attr, value)
-        
+
         user.save()
 
         return Response({
@@ -407,6 +416,8 @@ class UserAPI(APIView):
         }, status=status.HTTP_200_OK)
 
 # Create your views here.
+
+
 class Record(APIView):
     """
     Manage user records.
@@ -418,11 +429,19 @@ class Record(APIView):
     Response:
     - Success (200 OK):
     {
-        "field_name": {
-            "field": "string",
-            "totCorrect": "integer",
-            "totWrong": "integer",
-            "correctRate": "float"
+        "stats": {
+            "correct_rate": {
+                "maxVal": 100.0,
+                "val": 31.2
+            },
+            "win_rate": {
+                "maxVal": 100.0,
+                "val": 51.3
+            },
+            "avg_words": {
+                "maxVal": 100.0,
+                "val": 35.1
+            }
         },
         ...
     }
@@ -433,10 +452,17 @@ class Record(APIView):
     Request Body:
     {
         "field": "string",
-        "totCorrect": "integer",
-        "totWrong": "integer",
-        "opponent": "string",
-        "victory": "boolean"
+        "victory": true,
+        "records": [
+            {
+                "problem_id": "135jjsw",
+                "correct": false,
+            },
+            {
+                "problem_id": "3gg344h",
+                "correct": false,
+            }
+        ]
     }
 
     Response:
@@ -450,91 +476,257 @@ class Record(APIView):
     def get(self, request):
         """
         Get the user record, maybe analyse the improve rate in the future
-        
-        Response Data:
-        {
-            "sanrio": {
-                "field": "sanrio",
-                "totCorrect": 60,
-                "totWrong": 40,
-                "correctRate": 0.6,
-                # "improveRate": 10%,
-            },
-            "highschool": {
-                "field", "highschool",
-                "totCorrect": 60,
-                "totWrong": 40,
-                "correctRate": 0.6,
-                # "improveRate": 10%,
-            },
-        }
         """
 
         try:
             user = request.user
-            fieldRecordRes = {}
+            stats = []
 
-            for field in models.field_choice:
-                fieldKey = field[1]
-                print(f"finding record for {fieldKey}")
+            # correct rate
+            correct_rate = UniqueAnswerRecord.objects.filter(
+                user=user, correct=True).count() / UniqueAnswerRecord.objects.filter(
+                user=user).count()
 
-                records = AnswerRecord.objects.filter(
-                    user=user,
-                    field=fieldKey,
-                )
-
-                totCorrect = 0
-                totWrong = 0
-
-                for rec in records:
-                    totCorrect += rec.totCorrect
-                    totWrong += rec.totWrong
-                
-                correctRate = 0.0 if (totCorrect + totWrong) == 0 else totCorrect / (totCorrect + totWrong)
-
-                fieldRecordRes[fieldKey] = {
-                    "field": fieldKey,
-                    "totCorrect": totCorrect,
-                    "totWrong": totWrong,
-                    "correctRate": correctRate,
+            stats.append({
+                "correct_rate": {
+                    "maxVal": 100.0,
+                    "val": correct_rate,
                 }
-            
-            return Response(fieldRecordRes, status=status.HTTP_200_OK)
+            })
+
+            # win rate
+            win_rate = BattleRecord.objects.filter(
+                winner=user).count() / BattleRecord.objects.filter(
+                user=user).count()
+
+            stats.append({
+                "win_rate": {
+                    "maxVal": 100.0,
+                    "val": win_rate,
+                }
+            })
+
+            # avg words
+            first_word_date = WordLearningRecord.objects.filter(
+                user=user).order_by('createdTime').first().createdTime
+
+            today = datetime.now()
+
+            days = (today - first_word_date).days
+
+            avg_words = WordLearningRecord.objects.filter(
+                user=user).count() / days
+
+            stats.append({
+                "avg_words": {
+                    "maxVal": 100.0,
+                    "val": avg_words,
+                }
+            })
+
+            return Response(stats, status=status.HTTP_200_OK)
 
         except Exception as e:
             print(e)
             return Response({"error": e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def post(self, request):
-        """ 
-        Update the user record
 
-        request.data:
-        {
-            "field": "nursing",
-            "totCorrect": 10,
-            "totWrong": 2,
-            "opponent": "user2",
-            "victory": True,
-        }
+    def post(self, request):
         """
-        try:
+        Update the user record
+        """
+
+        field = request.data["field"]
+        records = request.data["records"]
+        for record in records:
+            problem = Problem.objects.get(hashed_id=record["problem_id"])
+            correct = record["correct"]
+
             # update the answer record
-            AnswerRecord.objects.create(
+            UniqueAnswerRecord.objects.create(
                 user=request.user,
-                field=request.data["field"],
-                totCorrect=request.data["totCorrect"],
-                totWrong=request.data["totWrong"],
+                field=field,
+                problem=problem,
+                correct=correct,
             )
 
-            # update the battle record
-            if request.data["victory"]:
-                opponent = list(User.objects.filter(username=request.data["opponent"]))[0]
-                BattleRecord.objects.create(winner=request.user, loser=opponent, field=request.data["field"])
-            
-            return Response({"message": "updated"}, status=status.HTTP_200_OK)
-        except Exception as e:
-            raise e
+        # update the battle record
+        if request.data["victory"]:
+            opponent = list(User.objects.filter(
+                username=request.data["opponent"]))[0]
+            BattleRecord.objects.create(
+                winner=request.user, loser=opponent, field=request.data["field"])
+
+        return Response({"message": "updated"}, status=status.HTTP_200_OK)
+
+
+class WordAPI(APIView):
+    """
+    Manage word records.
+
+    GET /word/
+    ------------
+    Request Headers: Authorization header with Bearer token.
+    Request Body:
+    {
+        "level": "integer"
+    }   
+
+    Response:
+    - Success (200 OK):
+    {
+        "words": [
+            {
+                "word": "string",
+                "definition": "string",
+            }
+        ]
+    }   
+
+    POST /word/
+    ------------
+    Request Headers: Authorization header with Bearer token.
+    Request Body:
+    {
+        "word": "string",
+        "status": "string"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "message": "updated"
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get the user word record, maybe analyse the improve rate in the future
+        """
+
+        level = request.GET.get("level")
+        words: list[Word] = Word.objects.filter(level=level)
+
+        serialized_words = [
+            {
+                "word": word.word,
+                "definition": Definition.objects.filter(word=word).first().definition,
+                "translation": Definition.objects.filter(word=word).first().translation,
+                "partOfSpeech": Definition.objects.filter(word=word).first().part_of_speech,
+                "example": Definition.objects.filter(word=word).first().example,
+                "level": word.level,
+                "isLearned": WordLearningRecord.objects.filter(
+                    user=request.user, word=word).status == REVIEWING,
+                "seenCount": WordLearningRecord.objects.filter(
+                    user=request.user, word=word).count(),
+            } for word in words
+        ]
+
+        return Response(serialized_words, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Update the user word record
+        """
+
+        word = request.data["word"]
+        status = request.data["status"]
+
+        WordLearningRecord.objects.create(
+            user=request.user, word=word, status=status)
+
+        return Response({"message": "updated"}, status=status.HTTP_200_OK)
+
+
+class WordProgressAPI(APIView):
+    """
+    Get the user word progress
+
+    GET /word_progress/
+    ---------------------
+    Request Headers: Authorization header with Bearer token.
+
+    Response:
+    - Success (200 OK):
+
+    POST /word_progress/
+    ---------------------
+    Request Headers: Authorization header with Bearer token.
+    Request Body:
+    {
+        "word": "string",
+        "status": "string"
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get the user word progress
+        """
+        word_progress = []
+
+        today = datetime.today()
+        start_of_month = today.replace(day=1)
+
+        current_date = start_of_month
+        while current_date <= today:
+            # Perform actions for each day here
+            current_date += timedelta(days=1)
+
+            word_learning_record = WordLearningRecord.objects.filter(
+                user=request.user, created_time=current_date.date()
+            ).count()
+
+            word_progress.append(word_learning_record)
+
+        return Response(word_progress, status=status.HTTP_200_OK)
+
+
+class CorrectRateAPI(APIView):
+    """
+    Get the user correct rate
+
+    GET /correct_rate/
+    ---------------------
+    Request Headers: Authorization header with Bearer token.
+
+    Response:
+    - Success (200 OK):
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get the user correct rate
+        """
+        correct_rate = []
+
+        today = datetime.today()
+        start_date = today - timedelta(days=6)
+
+        current_date = start_date
+        while current_date <= today:
+            # Perform actions for each day here
+            current_date += timedelta(days=1)
+
+            correct_answers = UniqueAnswerRecord.objects.filter(
+                user=request.user, createdTime__date=current_date.date(), correct=True
+            ).count()
+
+            total_answers = UniqueAnswerRecord.objects.filter(
+                user=request.user, createdTime__date=current_date.date()
+            ).count()
+
+            if total_answers > 0:
+                daily_correct_rate = (correct_answers / total_answers) * 100
+            else:
+                daily_correct_rate = 0
+
+            correct_rate.append(daily_correct_rate)
+
+        return Response(correct_rate, status=status.HTTP_200_OK)
+
 
 class InitializeProblem(APIView):
     """
@@ -561,14 +753,14 @@ class InitializeProblem(APIView):
             user = request.user
             if user.username != os.environ["ADMIN_USERNAME"]:
                 return Response({"error": "no permission"}, status=status.HTTP_403_FORBIDDEN)
-            
+
             with open('gaming/problems.json', 'r') as f:
                 all_problems = json.load(f)
 
                 for key, item in all_problems.items():
                     for problem in item:
                         hashed_id = hash_problem(problem)
-                        
+
                         problem_object, created = Problem.objects.get_or_create(
                             hashed_id=hashed_id,
                             defaults={
@@ -581,11 +773,31 @@ class InitializeProblem(APIView):
                         )
 
                         if created:
-                            print(f"problem {problem['problem']} is initialized")
+                            print(
+                                f"problem {problem['problem']} is initialized")
 
-                return Response({"message": "initialized"}, status=status.HTTP_200_OK)
-    
         except Exception as e:
             raise e
 
-        
+        with open("gaming/words.json", "r") as f:
+            word_list = json.load(f)
+
+        for word in word_list:
+            word_object, created = Word.objects.get_or_create(
+                word=word["word"],
+                defaults={
+                    "word": word["word"],
+                    "level": word["level"],
+                }
+            )
+
+            for definition in word["definitions"]:
+                Definition.objects.get_or_create(
+                    word=word_object,
+                    definition=definition["definition"],
+                    part_of_speech=definition["part_of_speech"],
+                    example=definition["example"],
+                    translation=definition["translation"],
+                )
+
+        return Response({"message": "initialized"}, status=status.HTTP_200_OK)

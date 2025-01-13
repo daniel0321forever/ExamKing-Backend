@@ -4,6 +4,7 @@ import json
 
 userID = "computer"
 
+
 async def connectToSocket(uri):
     async with websockets.connect(uri) as websocket:
         i = 0
@@ -22,8 +23,11 @@ async def connectToSocket(uri):
         # print(f"get response {res}")
 
 # challenge = input("please input challenge: ")
-challenge = "nursing"
+challenge = "gre"
 asyncio.get_event_loop().run_until_complete(
-    # connectToSocket(f'wss://miutech.cloud:8991/ws/battle?user={userID}&challenge={challenge}')
-    connectToSocket(f'ws://localhost:8000/ws/battle?user={userID}&challenge={challenge}')
+    connectToSocket(
+        # f'wss://miutech.cloud:8991/ws/battle?user={userID}&challenge={challenge}'
+        f'ws://localhost:8000/ws/battle?user={userID}&challenge={challenge}'
+    )
+    # connectToSocket()
 )
