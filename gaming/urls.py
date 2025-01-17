@@ -14,4 +14,5 @@ urlpatterns = [
     path('correct_rate', CorrectRateAPI.as_view()),
     path('word_progress', WordProgressAPI.as_view()),
     path('word', WordAPI.as_view()),
+    path('article', CreateArticle.as_view()),
 ]

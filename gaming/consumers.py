@@ -24,6 +24,7 @@ random.seed()
 
 ROOM_PREFIX = "room"
 ROOM_HOST_POSTFIX = "host"
+COMPUTER_USER_ID = "Adjff13026887732F1"
 
 
 class GameConsumer(WebsocketConsumer):
@@ -86,7 +87,10 @@ class GameConsumer(WebsocketConsumer):
             # TODO: wrap in cleaner style
             self.username = query.get('user', None)
             challenge = query.get('challenge', None)
-            level = query.get('level', 0)
+            level = int(query.get('level', ['0'])[0])
+
+            print(
+                f"username: {self.username}, challenge: {challenge}, level: {level}")
 
             if self.username is None:
                 self.send("self.username is not provided in url")
@@ -100,7 +104,7 @@ class GameConsumer(WebsocketConsumer):
             challenge = challenge[0]
 
             # get waiting list
-            self.challengeRoomKey = f'{challenge}_waiting'
+            self.challengeRoomKey = f'{challenge}_{level}_waiting'
             waitingRoom = r.lpop(self.challengeRoomKey)
             # print("\nget waiting ID", waitingRoom)
 
@@ -111,6 +115,7 @@ class GameConsumer(WebsocketConsumer):
 
             # if someone's waiting
             else:
+                print("someone's waiting")
                 waitingRoom = waitingRoom if isinstance(
                     waitingRoom, str) else waitingRoom.decode()
                 while r.get(waitingRoom):
@@ -132,6 +137,7 @@ class GameConsumer(WebsocketConsumer):
                 else:
                     self.pushRoom(self.username)
 
+            print("add to group", self.roomName)
             async_to_sync(self.channel_layer.group_add)(
                 self.roomName,
                 self.channel_name,
@@ -221,6 +227,11 @@ class GameConsumer(WebsocketConsumer):
                     },
                 )
                 r.delete(f"{self.roomName}_{ROOM_HOST_POSTFIX}")
+
+        except ValueError as e:
+            self.send(json.dumps(
+                {"error": f"cannot push computer user to the queue"}))
+            self.close()
 
         except Exception as e:
             # self.send(json.dumps({"error": f"exception {e} occurs as client connecting to game socket"}))
@@ -314,8 +325,13 @@ class GameConsumer(WebsocketConsumer):
                 f"excepction '{e}' occurs as game consumer received data from client")
             self.send(json.dumps(
                 {'error': f"exception '{e}' occurs as game consumer received data from client"}))
+            raise e
 
     def pushRoom(self, userID):
+        # don't push computer user to the queue
+        if userID == COMPUTER_USER_ID:
+            raise ValueError("computer user cannot be pushed to the queue")
+
         hashedUserID = hash(userID)
         self.roomName = f"{ROOM_PREFIX}_{hashedUserID}_{self.challengeRoomKey}"
         r.rpush(self.challengeRoomKey, self.roomName)

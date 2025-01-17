@@ -1,8 +1,9 @@
+from .algo import hash_problem
+from .serializers import UserSignupSerializer, UserSigninSerializer, UserSerializer
+from .models import *
 import os
 import json
 from datetime import datetime, timedelta
-
-from gaming import models
 
 from django.shortcuts import render
 from django.db.models import QuerySet
@@ -17,10 +18,9 @@ from rest_framework.views import APIView, Response, Request, status
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import google.generativeai as genai
 
-from .models import *
-from .serializers import UserSignupSerializer, UserSigninSerializer, UserSerializer
-from .algo import hash_problem
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
 class AuthGoogle(APIView):
@@ -549,15 +549,14 @@ class Record(APIView):
             # update the answer record
             UniqueAnswerRecord.objects.create(
                 user=request.user,
-                field=field,
                 problem=problem,
                 correct=correct,
             )
 
         # update the battle record
         if request.data["victory"]:
-            opponent = list(User.objects.filter(
-                username=request.data["opponent"]))[0]
+            opponent = User.objects.filter(
+                username=request.data["opponent"]).first()
             BattleRecord.objects.create(
                 winner=request.user, loser=opponent, field=request.data["field"])
 
@@ -685,13 +684,14 @@ class WordProgressAPI(APIView):
         current_date = start_of_month
         while current_date <= today:
             # Perform actions for each day here
-            current_date += timedelta(days=1)
 
             word_learning_record = WordLearningRecord.objects.filter(
                 user=request.user, created_time=current_date.date()
             ).count()
 
             word_progress.append(word_learning_record)
+
+            current_date += timedelta(days=1)
 
         return Response(word_progress, status=status.HTTP_200_OK)
 
@@ -739,6 +739,67 @@ class CorrectRateAPI(APIView):
             correct_rate.append(daily_correct_rate)
 
         return Response([correct_rate], status=status.HTTP_200_OK)
+
+
+class CreateArticle(APIView):
+    """
+    Create an article from specified words
+
+    GET /create_article/
+    -----------------------
+    Request Headers: Authorization header with Bearer token.
+    Request Query:
+    {
+        "level": "integer"
+    }
+
+    Response:
+    - Success (200 OK):
+    {
+        "article": "string"
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+
+    # Create the model
+    _query_generation_model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash-exp",
+        generation_config={
+            "temperature": 0.8,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 8192,
+            "response_mime_type": "text/plain",
+        },
+    )
+
+    chat_history = []
+
+    @classmethod
+    def _send_message(cls, model: genai.GenerativeModel, message: str) -> str:
+        chat_session = model.start_chat(history=[])
+
+        response = chat_session.send_message(message)
+        return response.text
+
+    def get(self, request):
+        level = int(request.GET.get("level"))
+        words = Word.objects.filter(level=level).order_by('?')[:10]
+
+        prompt = f"""
+make me a article with 300 words that must include the following words: {words}. 
+The article doesn't have to be great, but must include the the words mentioned. 
+The response should be in plain text format that only contain the article without any other words, and the included words in the article should be marked with @word&
+"""
+        print(prompt)
+
+        response = self._send_message(self._query_generation_model, prompt)
+
+        print(response)
+
+        return Response({"article": response}, status=status.HTTP_200_OK)
 
 
 class InitializeProblem(APIView):
