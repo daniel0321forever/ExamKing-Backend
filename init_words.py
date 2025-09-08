@@ -1,28 +1,59 @@
 import json
-import requests
+import csv
 
-word_level_map = {}
+# with open('gaming/words.json', 'r') as f:
+#     data = json.load(f)
 
-with open('word_level.json', 'r') as f:
-    data = json.load(f)
+#     for word in data:
+#         word['type'] = 'gre'
 
-    for i, word_list in enumerate(data):
-        for word in word_list:
-            word_level_map[word] = i + 1
+#     print("==============================================")
+    
+#     with open('gaming/words.json', 'w') as f:
+#         json.dump(data, f, indent=2, ensure_ascii=False)
+
+append_data = []
+
+with open('7000.csv', 'r') as f:
+    reader = csv.reader(f)
+    
+    for row in reader:
+        for word_data in row:
+            if not word_data:
+                continue
+
+            print(word_data)
+
+            word, data = word_data.split('@')
+            part_of_speech = data.split('.')[0][1:]
+            
+            sliced_data = data.split(')')
+            chinese = "".join(sliced_data[1:])
+
+            append_data.append({
+                "word": word,
+                "level": 0,
+                "type": "hs7000",
+                "definitions": [
+                    {
+                        "part_of_speech": part_of_speech,
+                        "translation": chinese
+                    }
+                ]
+            })
+
 
 with open('gaming/words.json', 'r') as f:
     data = json.load(f)
 
-    for word in data:
-        word_level = word_level_map.get(word['word'], None)
+    word_list = [d['word'] for d in data]
 
-        if word_level is None:
-            print(word['word'], "is not in word_level_map")
+    for d in append_data:
+        if d['word'] in word_list:
             continue
+        
+        data.append(d)
 
-        word['level'] = word_level
-
-    print("==============================================")
-    
     with open('gaming/words.json', 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    

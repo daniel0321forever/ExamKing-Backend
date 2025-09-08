@@ -26,6 +26,15 @@ word_learning_status = (
 )
 
 
+GRE = "gre"
+HS7000 = "hs7000"
+
+test_type = (
+    (GRE, "gre"),
+    (HS7000, "hs7000"),
+)
+
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
@@ -125,6 +134,7 @@ class Word(models.Model):
 
     word = models.CharField(primary_key=True, max_length=256, unique=True)
     level = models.IntegerField()
+    test_type = models.CharField(max_length=32, choices=test_type)
     hesitations = models.ManyToManyField(
         'User', through='Hesitation', blank=True)
 
@@ -137,7 +147,7 @@ class Definition(models.Model):
         db_table = "definition"
 
     word = models.ForeignKey('Word', on_delete=models.CASCADE)
-    definition = models.CharField(max_length=512)
+    definition = models.CharField(max_length=512, null=True, blank=True)
     part_of_speech = models.CharField(max_length=256)
     example = models.CharField(max_length=1024)
     translation = models.CharField(max_length=256)

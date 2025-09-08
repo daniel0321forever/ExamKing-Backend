@@ -2,5 +2,7 @@
 **/__pycache__/
 **/.DS_Store
 
+venv/
+
 db.sqlite3
 magoosh_1000.csv
