@@ -4,8 +4,8 @@ import dotenv
 
 dotenv.load_dotenv()
 
-# host = "https://miutech.cloud:8991/api"
-host = "http://localhost:8000/api"
+host = "https://miutech.cloud:8991/api"
+# host = "http://localhost:8000/api"
 username = os.environ["ADMIN_USERNAME"]
 password = os.environ["ADMIN_PASSWORD"]
 
@@ -45,6 +45,25 @@ def initialize_problem():
     else:
         print(f"error: {response.status_code} {response.text}")
 
+def initialize_word():
+    token = get_token()
+    if not token:
+        print("no permission")
+        return
+
+    url = f"{host}/initialize_word"
+    response = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    if response.status_code == 200:
+        print("initialize_word success")
+    else:
+        print(response.json())
+        print("initialize_word failed")
+
 
 if __name__ == "__main__":
-    initialize_problem()
+    # initialize_problem()
+    initialize_word()

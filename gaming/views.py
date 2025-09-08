@@ -878,3 +878,47 @@ class InitializeProblem(APIView):
                             f"problem {problem['problem']} is initialized")
 
         return Response({"message": "initialized"}, status=status.HTTP_200_OK)
+    
+class InitializeWord(APIView):
+    """
+    Initialize words from a JSON file.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Initialize words from a JSON file.
+        """
+        with open("gaming/words.json", "r") as f:
+            word_list = json.load(f)
+
+        for word in word_list:
+            word_object, created = Word.objects.get_or_create(
+                word=word["word"],
+                defaults={
+                    "word": word["word"],
+                    "level": word["level"],
+                }
+            )
+
+            if not created:
+                word_object.level = word["level"]
+                word_object.save()
+
+            for definition in word["definitions"]:
+                definition_object, created = Definition.objects.get_or_create(
+                    word=word_object,
+                    definition=definition["definition"],
+                    part_of_speech=definition["part_of_speech"],
+                    example=definition["example"],
+                    translation=definition["translation"],
+                )
+
+                if not created:
+                    definition_object.definition = definition["definition"]
+                    definition_object.part_of_speech = definition["part_of_speech"]
+                    definition_object.example = definition["example"]
+                    definition_object.translation = definition["translation"]
+                    definition_object.save()
+
+        return Response({"message": "initialized"}, status=status.HTTP_200_OK)
