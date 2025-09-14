@@ -29,7 +29,7 @@ word_learning_status = (
 GRE = "gre"
 HS7000 = "hs7000"
 
-test_type = (
+test_type_choice = (
     (GRE, "gre"),
     (HS7000, "hs7000"),
 )
@@ -134,7 +134,7 @@ class Word(models.Model):
 
     word = models.CharField(primary_key=True, max_length=256, unique=True)
     level = models.IntegerField()
-    test_type = models.CharField(max_length=32, choices=test_type)
+    test_type = models.CharField(max_length=32, choices=test_type_choice, default=GRE)
     hesitations = models.ManyToManyField(
         'User', through='Hesitation', blank=True)
 

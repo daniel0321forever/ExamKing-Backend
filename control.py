@@ -4,8 +4,8 @@ import dotenv
 
 dotenv.load_dotenv()
 
-# host = "https://miutech.cloud:8991/api"
-host = "http://localhost:8991/api"
+host = "https://miutech.cloud:8991/api"
+# host = "http://localhost:8991/api"
 username = os.environ["ADMIN_USERNAME"]
 password = os.environ["ADMIN_PASSWORD"]
 

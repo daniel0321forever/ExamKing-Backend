@@ -609,7 +609,8 @@ class WordAPI(APIView):
         """
 
         level = request.GET.get("level")
-        words = Word.objects.filter(level=level)
+        test_type = request.GET.get("test_type", "gre")
+        words = Word.objects.filter(level=level, test_type=test_type)
 
         serialized_words = [
             {
@@ -619,6 +620,7 @@ class WordAPI(APIView):
                 "partOfSpeech": Definition.objects.filter(word=word).first().part_of_speech,
                 "example": Definition.objects.filter(word=word).first().example,
                 "level": word.level,
+                "testType": word.test_type,
                 "isLearned": WordLearningRecord.objects.filter(
                     user=request.user, word=word).first().status == REVIEWING if len(WordLearningRecord.objects.filter(
                         user=request.user, word=word)) > 0 else False,
@@ -898,6 +900,7 @@ class InitializeWord(APIView):
                 defaults={
                     "word": word["word"],
                     "level": word["level"],
+                    "test_type": word["test_type"],
                 }
             )
 
@@ -908,17 +911,17 @@ class InitializeWord(APIView):
             for definition in word["definitions"]:
                 definition_object, created = Definition.objects.get_or_create(
                     word=word_object,
-                    definition=definition["definition"],
-                    part_of_speech=definition["part_of_speech"],
-                    example=definition["example"],
-                    translation=definition["translation"],
+                    definition=definition.get("definition", ""),
+                    part_of_speech=definition.get("part_of_speech", ""),
+                    example=definition.get("example", ""),
+                    translation=definition.get("translation", ""),
                 )
 
                 if not created:
-                    definition_object.definition = definition["definition"]
-                    definition_object.part_of_speech = definition["part_of_speech"]
-                    definition_object.example = definition["example"]
-                    definition_object.translation = definition["translation"]
+                    definition_object.definition = definition.get("definition", "")
+                    definition_object.part_of_speech = definition.get("part_of_speech", "")
+                    definition_object.example = definition.get("example", "")
+                    definition_object.translation = definition.get("translation", "")
                     definition_object.save()
 
         return Response({"message": "initialized"}, status=status.HTTP_200_OK)
